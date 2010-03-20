@@ -1,0 +1,33 @@
+# scextract.yml
+---
+#quiet: 1
+debug: 1
+keepcue: 0
+logfile: ./scextract.log
+pretend: 0
+remove: 0
+rename: 1
+space: .
+subs: 1
+unrar: /usr/bin/unrar
+verbose: 1
+
+#rename_class: XBOX
+# options specific to the rename module
+#    - xvid
+#    - svcd
+#    - dvdr
+#    - proper
+#    - limited
+#    - swedish
+#    - unrated
+#    - ws
+#    - fs
+#    - repack
+#    - rerip
+#    - real
+#    - retail
+#    - int(?:ernal)?
+#    - re(?:pack|rip)
+#    - (?:s|sd|hd|pd)tv
+# extended uncut remastered unrated theatrical chrono
