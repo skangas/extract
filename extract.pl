@@ -103,13 +103,13 @@ for my $file (@files) {
 
 sub dprint {
     if ( $conf->{debug} ) {
-        print for @_;
+        say for @_;
     }
 }
 
 sub vprint {
     if ( $conf->{verbose} || $conf->{debug} ) {
-        print for @_;
+        say for @_;
     }
 }
 
