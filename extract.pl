@@ -41,44 +41,39 @@ if (scalar @ARGV) {
 
 ### Build the extract command
 
-my $rars = File::Finder->type('f')->eval(
-    sub{
-        m{\.001\Z} || m{\.rar\Z}i && ( m{\.part0*1\.rar\Z}i || !m{\.part\d+\.rar\Z}i);
+my $rars = File::Finder->type('f')->eval(sub {
+    m{\.001\Z} || m{\.rar\Z}i && ( m{\.part0*1\.rar\Z}i || !m{\.part\d+\.rar\Z}i);
 });
 
 ### Extract the files
 
-my @files;
+my @rars;
     {
-        say "Will extract:";
+        vprint "Will extract:";
         $rars = $rars->print;
         $rars->in(@search_dirs);
-        say "";
+        vprint "";
         unless ($conf->{pretend}) {
             my @command = qw'unrar -o+ -inul';
             #    push @command, "-inul" unless $conf->{verbose};
-            push @command, 'x';
-            push @command, '{}';
+            push @command, qw'x {}';
             push @command, $conf->{target} if $conf->{target};            
             $rars = $rars->exec(@command);
             
         }
         say "Now extracting:";
-        @files = $rars->in(@search_dirs);
+        @rars = $rars->in(@search_dirs);
         say "";
     }
 
-
 ### Delete the files
 
-exit unless ($conf->{delete});
+exit unless $conf->{delete};
 
-sleep 1 unless $conf->{pretend};
-
-dprint( "Removed Files:" );
+vprint( "Removing files..." );
 my $rar_suffix = qr/\.(?:rar|r\d\d|\d{3}])\Z/i;
 
-for my $file (@files) {
+for my $file (@rars) {
     my $basename = fileparse($file, $rar_suffix);
     my $back = cwd();
     my $all_volumes = File::Finder->type('f')->eval(sub {
@@ -87,7 +82,7 @@ for my $file (@files) {
     if ($conf->{debug}) {
         $all_volumes = $all_volumes->print;
     }
-    if ( $conf->{delete} && !$conf->{pretend}) {
+    if (!$conf->{pretend}) {
         $all_volumes = $all_volumes->eval(sub{ unlink $_; });
     }
     $all_volumes->in(file($file)->dir);    
