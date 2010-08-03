@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-package main;
 
 use 5.010;
 use autodie;
