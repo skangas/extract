@@ -26,45 +26,12 @@ GetOptions(
     'delete'   => \$conf->{delete},
     'debug'    => \$conf->{debug},
     'pretend'  => \$conf->{pretend},
-    'quiet'    => \$conf->{quiet},
-#    'rename'   => \$conf->{rename},
     'target=s' => \$conf->{target},
     'verbose'  => \$conf->{verbose},
-#    'yes|y'    => \$conf->{yes},
 ) or die "Unable to get command line options.";
 
-my $all_rars = File::Finder->type('f')->eval(sub{
-    ### find the type of file we want
-    /(?:\.part0*1.rar # 1  part01.rar
-     |
-         
-         (?:
-             (?:[^p][^a][^r][^t]\d+)
-         |
-             \D
-         )
-         \.rar    # 2  rar
-     |\.001           # 3  001
-     )\Z/ix;
-});
-# Matches: tdf-ptaa.part11.rar
-#          tcg.cd1-iffm.part39.rar
+### Decide which directories to work on
 
-    {
-        if ($conf->{debug}) {
-            $all_rars = $all_rars->print;
-        }
-        unless ($conf->{pretend}) {
-            my @command = qw'unrar -o+ -inul';
-            #    push @command, "-inul" unless $conf->{verbose};
-            push @command, 'x';
-            push @command, '{}';
-            push @command, $conf->{target} if $conf->{target};            
-            $all_rars = $all_rars->exec(@command);
-        }
-    }
-
-### Decide directories to work on
 my @search_dirs;
 if (scalar @ARGV) {
     @search_dirs = @ARGV;
@@ -72,13 +39,43 @@ if (scalar @ARGV) {
     push @search_dirs, cwd();
 }
 
-my @files = $all_rars->in(@search_dirs);
+### Build the extract command
+
+my $rars = File::Finder->type('f')->eval(
+    sub{
+        m{\.001\Z} || m{\.rar\Z}i && ( m{\.part0*1\.rar\Z}i || !m{\.part\d+\.rar\Z}i);
+});
+
+### Extract the files
+
+my @files;
+    {
+        say "Will extract:";
+        $rars = $rars->print;
+        $rars->in(@search_dirs);
+        say "";
+        unless ($conf->{pretend}) {
+            my @command = qw'unrar -o+ -inul';
+            #    push @command, "-inul" unless $conf->{verbose};
+            push @command, 'x';
+            push @command, '{}';
+            push @command, $conf->{target} if $conf->{target};            
+            $rars = $rars->exec(@command);
+            
+        }
+        say "Now extracting:";
+        @files = $rars->in(@search_dirs);
+        say "";
+    }
+
 
 ### Delete the files
 
+exit unless ($conf->{delete});
+
 sleep 1 unless $conf->{pretend};
 
-dprint( "\n###### REMOVED FILES ######\n" );
+dprint( "Removed Files:" );
 my $rar_suffix = qr/\.(?:rar|r\d\d|\d{3}])\Z/i;
 
 for my $file (@files) {
@@ -93,8 +90,7 @@ for my $file (@files) {
     if ( $conf->{delete} && !$conf->{pretend}) {
         $all_volumes = $all_volumes->eval(sub{ unlink $_; });
     }
-    $all_volumes->in(file($file)->dir);
-    
+    $all_volumes->in(file($file)->dir);    
 }
 
 ##
