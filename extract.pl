@@ -115,21 +115,6 @@ sub vprint {
 
 # TODO
 
-# - option to check sfv with default behaviour to do so upon validating release (sfv_check 0|1)
-# - option to check sfv only if extract failed - we might have incomplete downloads (sfv_check 2)
-# - option not valid release if there isn't an SFV (sfv_required 1|0)
-
-# - Properly handle Sub-directories
-
-# - handle this with more than just luck:
-#   Ronny.Och.Ragge.Tillbaka.Till.Farrden.1.VHSRiP.SVCD.SWEDiSH-RULLSTOL/
-#   Ronny.Och.Ragge.Tillbaka.Till.Farrden.2.VHSRiP.SVCD.SWEDiSH-RULLSTOL/
-#                                         ^ 36 chars, here be luck
-# - modularize codebase for later insertion into rtorrent-helper
-
-# - get a large number of release names and check them for sanity,
-#   this would involve writing a testcase
-
 # - FATX::Rename (or something)
 #   42 bytes ASCII
 #   2 gb file size
@@ -138,9 +123,6 @@ sub vprint {
 
 # - break of unraring into a module which should be suitable
 #   for insertion into CPAN
-
-# - determine what log modules is nice and use it (Log::Trivial?)
-#   instead of ugly hack (Log4Perl is better?)
 
 # - automatic sorting into directories based on regexps
 # - automatic ftp upload - Net::FTP? - is this suited for
