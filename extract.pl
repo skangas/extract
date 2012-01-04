@@ -14,6 +14,12 @@ use File::Find::Rule;
 use Path::Class qw(file);
 use YAML::Syck;
 
+=head1 NAME
+
+extract.pl - Extract rar archives
+
+=cut
+
 ##
 ## PARSE OPTIONS
 ##
@@ -93,3 +99,17 @@ for my $file (@files) {
     say " DONE";
 }
 
+=head1 AUTHOR
+
+Stefan Kangas C<< <skangas at skangas.se> >>
+
+=head1 COPYRIGHT
+
+Copyright 2011 Stefan Kangas, all rights reserved.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as perl itself.
+
+=cut
