@@ -11,8 +11,6 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 use File::Find::Rule;
-use Path::Class qw(file);
-use YAML::Syck;
 
 =head1 NAME
 
@@ -24,7 +22,7 @@ extract.pl - Extract rar archives
 ## PARSE OPTIONS
 ##
 
-our $conf = LoadFile("$Bin/extract.yml");
+my $conf;
 GetOptions(
     'delete'   => \$conf->{delete},
     'pretend'  => \$conf->{pretend},
