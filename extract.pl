@@ -40,7 +40,7 @@ sub delete_archive {
             push @volumes, $1;
         }
     }
-    unlink for @volumes;
+    unlink $_ for @volumes;
 }
 
 sub get_files {
@@ -93,7 +93,7 @@ for my $file (@files) {
         ### Extract archive
         my @cmd = qw'unrar -o+ -c- -inul x';
         push @cmd, $file;
-        push @cmd, $conf->{target} if $conf->{target};
+        push @cmd, $conf->{target} if defined $conf->{target};
         system(@cmd);
         unless ($? == 0) {
             if ($? == 65280) {
