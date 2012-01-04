@@ -10,7 +10,7 @@ use lib "$Bin/lib";
 
 use Archive::Extract;
 use File::Basename;
-use File::Finder;
+use File::Find::Rule;
 use Path::Class qw(file);
 use Cwd qw(cwd abs_path);
 use Data::Dumper;
@@ -38,35 +38,38 @@ if (scalar @ARGV) {
 }
 
 ### Build the extract command
-my $rars = File::Finder->type('f')->size("+0")->eval(sub {
-    m{\.001\Z}
- || m{\.part0*1\.rar\Z}i
- || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
-});
+my $find = File::Find::Rule->new;
+$find->file
+    ->nonempty
+    ->exec(sub {
+               m{\.001\Z}
+            || m{\.part0*1\.rar\Z}i
+            || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
+           });
 
 ### Extract the files
 my @rars;
+my @command = qw'unrar -o+ -c- -inul x';
     {
         vprint("Will extract:");
-        $rars = $rars->print;
-        $rars->in(@search_dirs);
+        @rars = $find->in(@search_dirs);
+        say for @rars;
         vprint("");
-        unless ($conf->{pretend}) {
-            my @command = qw'unrar -o+ -inul';
-            #    push @command, "-inul" unless $conf->{verbose};
-            push @command, qw'x {}';
-            push @command, $conf->{target} if $conf->{target};            
-            $rars = $rars->exec(@command);
-            
-        }
         say "Now extracting:";
-        @rars = $rars->in(@search_dirs);
-        say "";
+        for my $file (@rars) {
+            say $file;
+            unless ($conf->{pretend}) {
+                my @cmd = (@command, $file);
+                push @cmd, $conf->{target} if $conf->{target};
+                system(@cmd);
+            }
+        }
     }
 
 ### Delete the files
 exit unless $conf->{delete};
 
+say "";
 vprint( "Removing files..." );
 my $rar_suffix = qr/((part\d+)?\.rar|\.(r\d\d|\d{3}]))\Z/i;
 
