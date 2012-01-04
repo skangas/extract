@@ -30,7 +30,7 @@ GetOptions(
 ## SUBROUTINES
 ##
 
-sub delete_files {
+sub delete_archive {
     my ($file) = @_;
     my $command = 'unrar -c- -v l';
     open my $out, "$command $file |";
@@ -41,6 +41,17 @@ sub delete_files {
         }
     }
     unlink for @volumes;
+}
+
+sub get_files {
+    my ($file) = @_;
+    my $command = 'unrar -c- lb';
+    open my $out, "$command $file |";
+    my @files;
+    for (<$out>) {
+        push @files, $_;
+    }
+    return @files;
 }
 
 ##
@@ -98,7 +109,7 @@ for my $file (@files) {
 
         ### Delete all files
         if ($conf->{delete}) {
-            delete_files($file);
+            delete_archive($file);
         }
     }
 
