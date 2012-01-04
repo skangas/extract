@@ -14,28 +14,20 @@ use File::Find::Rule;
 use Path::Class qw(file);
 use YAML::Syck;
 
-###
-### PARSE OPTIONS
-###
+##
+## PARSE OPTIONS
+##
 
 our $conf = LoadFile("$Bin/extract.yml");
 GetOptions(
     'delete'   => \$conf->{delete},
-    'debug'    => \$conf->{debug},
     'pretend'  => \$conf->{pretend},
     'target=s' => \$conf->{target},
-    'verbose'  => \$conf->{verbose},
 ) or die "Unable to get command line options.";
 
 ##
-## VARIOUS SUBROUTINES
+## SUBROUTINES
 ##
-
-sub vprint {
-    if ( $conf->{verbose} || $conf->{debug} ) {
-        say for @_;
-    }
-}
 
 sub delete_files {
     my ($file) = @_;
@@ -74,27 +66,30 @@ $find->file
 my @files = $find->in(@search_dirs);
 
 ### If pretending, print files and exit
-if ($conf->{pretend}) {
-    vprint("Pretending...");
-    say for @files;
-    exit;
-}
+say "Pretending, will not actually do anything..." if $conf->{pretend};
 
-### Extract the files
-my @command = qw'unrar -o+ -c- -inul x';
+### Otherwise, start work
 for my $file (@files) {
     print $file;
+
     unless ($conf->{pretend}) {
-        my @cmd = (@command, $file);
+
+        ### Extract archive
+        my @cmd = qw'unrar -o+ -c- -inul x';
+        push @cmd, $file;
         push @cmd, $conf->{target} if $conf->{target};
         system(@cmd);
+        unless ($? == 0) {
+            say " FAILED";
+            next;
+        }
+
+        ### Delete all files
+        if ($conf->{delete}) {
+            delete_files($file);
+        }
     }
 
-    ### Delete the files
-    if ($conf->{delete}) {
-        delete_files($file);
-    }
-
-    print " DONE\n";
+    say " DONE";
 }
 

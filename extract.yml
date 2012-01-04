@@ -2,7 +2,3 @@
 ---
 delete: 0
 pretend: 0
-verbose: 1
-rename: 1
-space: .
-subs: 1
