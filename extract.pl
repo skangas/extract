@@ -4,10 +4,7 @@ use 5.010;
 use autodie;
 use strict;
 
-use Cwd qw(cwd abs_path);
-use Data::Dumper;
-use File::Basename;
-use FindBin qw($Bin);
+use Cwd qw(cwd);
 use Getopt::Long;
 
 use File::Find::Rule;
