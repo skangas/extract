@@ -18,10 +18,9 @@ use Getopt::Long;
 use YAML::Syck;
 
 our $VERSION = '0.01';
-our $log;
 
 ### COMMAND LINE OPTIONS
-our $conf = LoadFile('/home/skangas/code/Scextract/scextract.yml');
+our $conf = LoadFile("$Bin/extract.yml");
 GetOptions(
     'delete'   => \$conf->{delete},
     'debug'    => \$conf->{debug},
@@ -30,8 +29,7 @@ GetOptions(
     'verbose'  => \$conf->{verbose},
 ) or die "Unable to get command line options.";
 
-### Decide which directories to work on
-
+### If there were no directories specified, use cwd
 my @search_dirs;
 if (scalar @ARGV) {
     @search_dirs = @ARGV;
@@ -40,13 +38,13 @@ if (scalar @ARGV) {
 }
 
 ### Build the extract command
-
 my $rars = File::Finder->type('f')->eval(sub {
-    m{\.001\Z} || m{\.rar\Z}i && ( m{\.part0*1\.rar\Z}i || !m{\.part\d+\.rar\Z}i);
+    m{\.001\Z}
+ || m{\.part0*1\.rar\Z}i
+ || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
 });
 
 ### Extract the files
-
 my @rars;
     {
         vprint("Will extract:");
@@ -67,7 +65,6 @@ my @rars;
     }
 
 ### Delete the files
-
 exit unless $conf->{delete};
 
 vprint( "Removing files..." );
