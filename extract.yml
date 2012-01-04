@@ -1,7 +1,6 @@
 # extract.yml
 ---
 delete: 0
-debug: 1
 pretend: 0
 verbose: 1
 rename: 1

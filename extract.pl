@@ -44,15 +44,16 @@ $find->file
 
 ### Print the files
 vprint("Will extract:");
-@rars = $find->in(@search_dirs);
-say for @rars;
+my @files;
+@files = $find->in(@search_dirs);
+say for @files;
 vprint("");
 
 ### Extract the files
-my @rars;
+
 my @command = qw'unrar -o+ -c- -inul x';
 say "Now extracting:";
-for my $file (@rars) {
+for my $file (@files) {
     say $file;
     unless ($conf->{pretend}) {
         my @cmd = (@command, $file);
@@ -67,34 +68,23 @@ exit unless $conf->{delete};
 say "";
 vprint( "Removing files..." );
 
-@command = qw'unrar -c- -v l';
+my $command = 'unrar -c- -v l';
 
-my $rar_suffix = qr/((part\d+)?\.rar|\.(r\d\d|\d{3}]))\Z/i;
-
-for my $file (@rars) {
-    my $basename = fileparse($file, $rar_suffix);
-    my $back = cwd();
-    my $all_volumes = File::Finder->type('f')->eval(sub {
-        /$basename$rar_suffix/
-    });
-    if ($conf->{debug}) {
-        $all_volumes = $all_volumes->print;
+for my $file (@files) {
+    my $out;
+    open $out, "$command $file |";
+    my @volumes;
+    for (<$out>) {
+        if (/^Volume (.*)$/) {
+            push @volumes, $1;
+        }
     }
-    if (!$conf->{pretend}) {
-        $all_volumes = $all_volumes->eval(sub{ unlink $_; });
-    }
-    $all_volumes->in(file($file)->dir);
+    say for @volumes;
 }
 
 ##
 ## VARIOUS SUBROUTINES
 ##
-
-sub dprint {
-    if ( $conf->{debug} ) {
-        say for @_;
-    }
-}
 
 sub vprint {
     if ( $conf->{verbose} || $conf->{debug} ) {
