@@ -8,6 +8,7 @@ use Cwd qw(cwd);
 use Getopt::Long;
 
 use File::Find::Rule;
+use Path::Class;
 
 =head1 NAME
 
@@ -58,14 +59,6 @@ sub get_files {
 ## MAIN PROGRAM
 ##
 
-### If there were no directories specified, use the cwd
-my @search_dirs;
-if (scalar @ARGV) {
-    @search_dirs = @ARGV;
-} else {
-    push @search_dirs, cwd();
-}
-
 ### Find all .rar files
 my $find = File::Find::Rule->new;
 $find->file
@@ -75,7 +68,15 @@ $find->file
             || m{\.part0*1\.rar\Z}i
             || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
            });
-my @files = sort $find->in(@search_dirs);
+
+### If there were no directories specified, use the cwd
+my @dirs;
+if (scalar @ARGV) {
+    @dirs = @ARGV;
+} else {
+    @dirs = cwd();
+}
+my @files = sort $find->in(@dirs);
 
 ### If pretending, print files and exit
 say "Pretending, will not actually do anything..." if $conf->{pretend};
@@ -93,8 +94,19 @@ for my $file (@files) {
         ### Extract archive
         my @cmd = qw'unrar -o+ -c- -inul x';
         push @cmd, $file;
-        push @cmd, $conf->{target} if defined $conf->{target};
+
+        # Set target directory
+        if (defined $conf->{target}) {
+            push @cmd, $conf->{target};
+        }
+        else {
+            push @cmd, file($file)->parent;
+        }
+
+        # Run the command
         system(@cmd);
+
+        # Check exit codes
         unless ($? == 0) {
             if ($? == 65280) {
                 say "ABORTED";
