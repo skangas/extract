@@ -75,7 +75,7 @@ $find->file
             || m{\.part0*1\.rar\Z}i
             || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
            });
-my @files = $find->in(@search_dirs);
+my @files = sort $find->in(@search_dirs);
 
 ### If pretending, print files and exit
 say "Pretending, will not actually do anything..." if $conf->{pretend};
