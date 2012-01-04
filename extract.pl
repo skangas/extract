@@ -78,7 +78,7 @@ for my $file (@files) {
     ### Print file name, excluding cwd
     my $cwd = cwd() . "/";
     $file =~ m/^($cwd)?(.*)/;
-    print $2;
+    print "$2 ";
 
     unless ($conf->{pretend}) {
 
@@ -88,8 +88,15 @@ for my $file (@files) {
         push @cmd, $conf->{target} if $conf->{target};
         system(@cmd);
         unless ($? == 0) {
-            say " FAILED";
-            next;
+            if ($? == 65280) {
+                say "ABORTED";
+                say "\nExtraction aborted, exiting...";
+                exit;
+            }
+            else {
+                say "FAILED";
+                next;
+            }
         }
 
         ### Delete all files
@@ -98,7 +105,7 @@ for my $file (@files) {
         }
     }
 
-    say " DONE";
+    say "OK";
 }
 
 =head1 AUTHOR
