@@ -76,7 +76,11 @@ say "Pretending, will not actually do anything..." if $conf->{pretend};
 
 ### Otherwise, start work
 for my $file (@files) {
-    print $file;
+
+    ### Print file name, excluding cwd
+    my $cwd = cwd() . "/";
+    $file =~ m/^($cwd)?(.*)/;
+    print $2;
 
     unless ($conf->{pretend}) {
 
