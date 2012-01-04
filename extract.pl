@@ -38,7 +38,7 @@ if (scalar @ARGV) {
 }
 
 ### Build the extract command
-my $rars = File::Finder->type('f')->eval(sub {
+my $rars = File::Finder->type('f')->size("+0")->eval(sub {
     m{\.001\Z}
  || m{\.part0*1\.rar\Z}i
  || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
