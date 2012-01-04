@@ -3,21 +3,16 @@
 use 5.010;
 use autodie;
 use strict;
-use warnings;
-        
-use FindBin qw($Bin);
-use lib "$Bin/lib";
 
-use Archive::Extract;
-use File::Basename;
-use File::Find::Rule;
-use Path::Class qw(file);
 use Cwd qw(cwd abs_path);
 use Data::Dumper;
+use File::Basename;
+use FindBin qw($Bin);
 use Getopt::Long;
-use YAML::Syck;
 
-our $VERSION = '0.01';
+use File::Find::Rule;
+use Path::Class qw(file);
+use YAML::Syck;
 
 ### COMMAND LINE OPTIONS
 our $conf = LoadFile("$Bin/extract.yml");
@@ -29,7 +24,7 @@ GetOptions(
     'verbose'  => \$conf->{verbose},
 ) or die "Unable to get command line options.";
 
-### If there were no directories specified, use cwd
+### If there were no directories specified, use the cwd
 my @search_dirs;
 if (scalar @ARGV) {
     @search_dirs = @ARGV;
@@ -47,30 +42,33 @@ $find->file
             || m{\.rar\Z}i && !m{\.part\d+\.rar\Z}i;
            });
 
+### Print the files
+vprint("Will extract:");
+@rars = $find->in(@search_dirs);
+say for @rars;
+vprint("");
+
 ### Extract the files
 my @rars;
 my @command = qw'unrar -o+ -c- -inul x';
-    {
-        vprint("Will extract:");
-        @rars = $find->in(@search_dirs);
-        say for @rars;
-        vprint("");
-        say "Now extracting:";
-        for my $file (@rars) {
-            say $file;
-            unless ($conf->{pretend}) {
-                my @cmd = (@command, $file);
-                push @cmd, $conf->{target} if $conf->{target};
-                system(@cmd);
-            }
-        }
+say "Now extracting:";
+for my $file (@rars) {
+    say $file;
+    unless ($conf->{pretend}) {
+        my @cmd = (@command, $file);
+        push @cmd, $conf->{target} if $conf->{target};
+        system(@cmd);
     }
+}
 
 ### Delete the files
 exit unless $conf->{delete};
 
 say "";
 vprint( "Removing files..." );
+
+@command = qw'unrar -c- -v l';
+
 my $rar_suffix = qr/((part\d+)?\.rar|\.(r\d\d|\d{3}]))\Z/i;
 
 for my $file (@rars) {
@@ -85,7 +83,7 @@ for my $file (@rars) {
     if (!$conf->{pretend}) {
         $all_volumes = $all_volumes->eval(sub{ unlink $_; });
     }
-    $all_volumes->in(file($file)->dir);    
+    $all_volumes->in(file($file)->dir);
 }
 
 ##
@@ -103,20 +101,3 @@ sub vprint {
         say for @_;
     }
 }
-
-# TODO
-
-# - FATX::Rename (or something)
-#   42 bytes ASCII
-#   2 gb file size
-#   should be able to take a list of regexp, i.e. [qr//, qr//] and use them for removing not needed information
-#   such as group tags and so on
-
-# - break of unraring into a module which should be suitable
-#   for insertion into CPAN
-
-# - automatic sorting into directories based on regexps
-# - automatic ftp upload - Net::FTP? - is this suited for
-#   scextract or better left to another tool? shellscripting?
-
-1;
