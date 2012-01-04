@@ -49,10 +49,10 @@ my $rars = File::Finder->type('f')->eval(sub {
 
 my @rars;
     {
-        vprint "Will extract:";
+        vprint("Will extract:");
         $rars = $rars->print;
         $rars->in(@search_dirs);
-        vprint "";
+        vprint("");
         unless ($conf->{pretend}) {
             my @command = qw'unrar -o+ -inul';
             #    push @command, "-inul" unless $conf->{verbose};
@@ -71,7 +71,7 @@ my @rars;
 exit unless $conf->{delete};
 
 vprint( "Removing files..." );
-my $rar_suffix = qr/\.(?:rar|r\d\d|\d{3}])\Z/i;
+my $rar_suffix = qr/((part\d+)?\.rar|\.(r\d\d|\d{3}]))\Z/i;
 
 for my $file (@rars) {
     my $basename = fileparse($file, $rar_suffix);
