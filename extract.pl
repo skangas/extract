@@ -7,6 +7,7 @@ use strict;
 use Cwd qw(cwd);
 use Getopt::Long;
 
+use File::Basename;
 use File::Find::Rule;
 use Path::Class;
 
@@ -24,6 +25,7 @@ my $conf;
 GetOptions(
     'delete'   => \$conf->{delete},
     'pretend'  => \$conf->{pretend},
+    'rename'   => \$conf->{rename},
     'target=s' => \$conf->{target},
 ) or die "Unable to get command line options.";
 
@@ -48,11 +50,52 @@ sub get_files {
     my ($file) = @_;
     my $command = 'unrar -c- lb';
     open my $out, "$command $file |";
-    my @files;
-    for (<$out>) {
-        push @files, $_;
+    my @fs;
+    for my $f (<$out>) {
+        chomp $f;
+        push @fs, $f;
     }
-    return @files;
+    return @fs;
+}
+
+sub get_target {
+    my ($file) = @_;
+    if (defined $conf->{target}) {
+        return $conf->{target};
+    } else {
+        return file($file)->parent;
+    }
+}
+
+sub rename_files {
+    my ($file) = @_;
+    my $dir = file($file)->parent;
+    my $base = (fileparse($dir->subdir))[0];
+    my $target = get_target($file);
+
+    if ($base =~ m/^CD\d+$/) {
+        $base = (fileparse($dir->parent->subdir))[0] . ".$base";
+    }
+
+    my @fs = get_files($file);
+    for my $old (@fs) {
+        my ($nam, $loc, $suf) = fileparse($old, qr/\.[^.]*\Z/);
+        my $new = $base . $suf;
+
+        # Ensure file exists before trying to rename it
+        unless (-f "$target/$old") {
+            warn "\nAborting rename. No such file: $target/$old\n";
+            return;
+        }
+
+        # Ensure new file location does not already exist
+        my $i = 1;
+        while (-e "$target/$new") {
+            $new = $base . ".$i" . $suf;
+        }
+
+        rename "$target/$old", "$target/$new";
+    }
 }
 
 ##
@@ -94,14 +137,7 @@ for my $file (@files) {
         ### Extract archive
         my @cmd = qw'unrar -o+ -c- -inul x';
         push @cmd, $file;
-
-        # Set target directory
-        if (defined $conf->{target}) {
-            push @cmd, $conf->{target};
-        }
-        else {
-            push @cmd, file($file)->parent;
-        }
+        push @cmd, get_target($file);
 
         # Run the command
         system(@cmd);
@@ -117,6 +153,11 @@ for my $file (@files) {
                 say "FAILED";
                 next;
             }
+        }
+
+        ### Rename files as needed
+        if ($conf->{rename}) {
+            rename_files($file);
         }
 
         ### Delete all files
