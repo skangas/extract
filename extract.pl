@@ -5,6 +5,7 @@ use autodie;
 use strict;
 
 use Cwd qw(cwd);
+use File::Path qw(remove_tree);
 use Getopt::Long;
 
 use File::Basename;
@@ -23,11 +24,17 @@ extract.pl - Extract rar archives
 
 my $conf;
 GetOptions(
-    'delete'   => \$conf->{delete},
-    'pretend'  => \$conf->{pretend},
-    'rename'   => \$conf->{rename},
-    'target=s' => \$conf->{target},
+    'delete'           => \$conf->{delete},
+    'delete-directory' => \$conf->{delete_directory},
+    'pretend'          => \$conf->{pretend},
+    'rename'           => \$conf->{rename},
+    'target=s'         => \$conf->{target},
 ) or die "Unable to get command line options.";
+
+if (defined $conf->{delete_directory}
+        && !defined $conf->{target}) {
+    die "using --delete-directory without setting --target is disallowed";
+} 
 
 ##
 ## SUBROUTINES
@@ -44,6 +51,17 @@ sub delete_archive {
         }
     }
     unlink $_ for @volumes;
+}
+
+sub delete_directory {
+    my ($file) = @_;
+    my $dir = file($file)->parent;
+    if ($dir =~ m/^CD\d+$/) {
+        $dir = $dir->parent;
+    }
+    remove_tree($dir, {
+        verbose => 0,
+    });
 }
 
 sub get_files {
@@ -69,12 +87,12 @@ sub get_target {
 
 sub rename_files {
     my ($file) = @_;
-    my $dir = file($file)->parent;
-    my $base = (fileparse($dir->subdir))[0];
     my $target = get_target($file);
 
+    my $dir = file($file)->parent;
+    my $base = (fileparse($dir))[0];
     if ($base =~ m/^CD\d+$/) {
-        $base = (fileparse($dir->parent->subdir))[0] . ".$base";
+        $base = (fileparse($dir->parent))[0] . ".$base";
     }
 
     my @fs = get_files($file);
@@ -160,8 +178,11 @@ for my $file (@files) {
             rename_files($file);
         }
 
-        ### Delete all files
-        if ($conf->{delete}) {
+        ### Delete files, or entire directory
+        if (\$conf->{delete_directory}) {
+            delete_directory($file);
+        }
+        elsif ($conf->{delete}) {
             delete_archive($file);
         }
     }
