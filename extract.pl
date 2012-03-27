@@ -81,7 +81,13 @@ sub get_target {
     if (defined $conf->{target}) {
         return $conf->{target};
     } else {
-        return file($file)->parent;
+        my $dir = file($file)->parent;
+        my $base = (fileparse($dir))[0];
+        if ($base =~ m/^(CD\d+|Subs)$/i) {
+            return file($file)->parent->parent;
+        } else {
+            return file($file)->parent;   
+        }
     }
 }
 
@@ -91,8 +97,8 @@ sub rename_files {
 
     my $dir = file($file)->parent;
     my $base = (fileparse($dir))[0];
-    if ($base =~ m/^CD\d+$/) {
-        $base = (fileparse($dir->parent))[0] . ".$base";
+    if ($base =~ m/^(CD\d+)$/) {
+        $base = (fileparse($dir->parent))[0] . ".$1";
     }
 
     my @fs = get_files($file);
@@ -150,34 +156,38 @@ for my $file (@files) {
     $file =~ m/^($cwd)?(.*)/;
     print "$2 ";
 
+    ### Extract archive
+    my @cmd = qw'unrar -o+ -c- -inul x';
+    push @cmd, $file;
+    push @cmd, get_target($file);
+    
+    # Run the command
     unless ($conf->{pretend}) {
-
-        ### Extract archive
-        my @cmd = qw'unrar -o+ -c- -inul x';
-        push @cmd, $file;
-        push @cmd, get_target($file);
-
-        # Run the command
         system(@cmd);
-
-        # Check exit codes
-        unless ($? == 0) {
-            if ($? == 65280) {
-                say "ABORTED";
-                say "\nExtraction aborted, exiting...";
-                exit;
-            }
-            else {
-                say "FAILED";
-                next;
-            }
+    }
+    else {
+        say "\nCommand: " . join ' ', @cmd;
+    }
+    
+    # Check exit codes
+    unless ($? == 0) {
+        if ($? == 65280) {
+            say 'ABORTED';
+            say "\nExtraction aborted, exiting...";
+            exit;
         }
+        else {
+            say 'FAILED';
+            next;
+        }
+    }
 
+    unless ($conf->{pretend}) {
         ### Rename files as needed
         if ($conf->{rename}) {
             rename_files($file);
         }
-
+        
         ### Delete files, or entire directory
         if (\$conf->{delete_directory}) {
             delete_directory($file);
