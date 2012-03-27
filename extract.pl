@@ -29,6 +29,7 @@ GetOptions(
     'pretend'          => \$conf->{pretend},
     'rename'           => \$conf->{rename},
     'target=s'         => \$conf->{target},
+    'verbose'          => \$conf->{verbose},
 ) or die "Unable to get command line options.";
 
 if (defined $conf->{delete_directory}
@@ -59,9 +60,7 @@ sub delete_directory {
     if ($dir =~ m/^CD\d+$/) {
         $dir = $dir->parent;
     }
-    remove_tree($dir, {
-        verbose => 0,
-    });
+    remove_tree($dir, { verbose => 0 });
 }
 
 sub get_files {
@@ -118,8 +117,14 @@ sub rename_files {
             $new = $base . ".$i" . $suf;
         }
 
+        vsay("rename: $target/$old -> $target/$new");
+
         rename "$target/$old", "$target/$new";
     }
+}
+
+sub vsay {
+    say @_ if $conf->{verbose};
 }
 
 ##
@@ -145,7 +150,6 @@ if (scalar @ARGV) {
 }
 my @files = sort $find->in(@dirs);
 
-### If pretending, print files and exit
 say "Pretending, will not actually do anything..." if $conf->{pretend};
 
 ### Otherwise, start work
@@ -165,10 +169,8 @@ for my $file (@files) {
     unless ($conf->{pretend}) {
         system(@cmd);
     }
-    else {
-        say "\nCommand: " . join ' ', @cmd;
-    }
-    
+    vsay "\nCommand: " . join ' ', @cmd;
+
     # Check exit codes
     unless ($? == 0) {
         if ($? == 65280) {
@@ -182,19 +184,17 @@ for my $file (@files) {
         }
     }
 
-    unless ($conf->{pretend}) {
-        ### Rename files as needed
-        if ($conf->{rename}) {
-            rename_files($file);
-        }
-        
-        ### Delete files, or entire directory
-        if ($conf->{delete_directory}) {
-            delete_directory($file);
-        }
-        elsif ($conf->{delete}) {
-            delete_archive($file);
-        }
+    ### Rename files as needed
+    if ($conf->{rename} && !$conf->{pretend}) {
+        rename_files($file);
+    }
+    
+    ### Delete files, or entire directory
+    if ($conf->{delete_directory} && !$conf->{pretend}) {
+        delete_directory($file);
+    }
+    elsif ($conf->{delete} && !$conf->{pretend}) {
+        delete_archive($file);
     }
 
     say "OK";
