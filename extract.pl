@@ -206,7 +206,7 @@ Stefan Kangas C<< <skangas at skangas.se> >>
 
 =head1 COPYRIGHT
 
-Copyright 2011 Stefan Kangas, all rights reserved.
+Copyright 2011, 2012 Stefan Kangas, all rights reserved.
 
 =head1 LICENSE
 
