@@ -189,7 +189,7 @@ for my $file (@files) {
         }
         
         ### Delete files, or entire directory
-        if (\$conf->{delete_directory}) {
+        if ($conf->{delete_directory}) {
             delete_directory($file);
         }
         elsif ($conf->{delete}) {
